@@ -4,9 +4,9 @@ Argumentation Graph Visualisation prototype created for Regis Riveret of Data61 
 In its current state, this prototype can open and display argumentation graphs in
 an interactive manner.
 
-Green arrows represent support relations
-Red solid arrows represent rebut attacks
-Red dashed arrows reporesent undercut attacks
+Green arrows represent support relations\n
+Red solid arrows represent rebut attacks\n
+Red dashed arrows represent undercut attacks\n
 
 To view project, make sure you have python installed and on your path, then 
 run python -m http.server 8000 and visit 127.0.0.1:8000 in the browser of your choice
