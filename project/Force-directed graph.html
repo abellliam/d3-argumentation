@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  stroke: #000000;
+  fill: #0088ff;
+  stroke-width: 1px;
+}
+
+.link {
+  fill: none;
+  stroke-width: 2px;
+}
+
+.tooltip {
+  position: absolute;
+  text-align: center;
+  width: auto;
+  height: auto;
+  padding: 3px 5px 3px 5px;
+  font: 1em sans-serif;
+  border: 0px;
+  border-radius: 5px;
+  pointer-events: none;
+  box-shadow: 3px 3px 6px #00000033;
+  background-color: #77b1fc;
+}
+
+#attackundercut {
+  fill: #dd0000;
+}
+
+#attackrebut {
+  fill: #dd0000;
+}
+
+#support {
+  fill: #70bb00;
+}
+
+div.wrapper {
+  display: inline-flex;
+}
+
+div.button {
+  font-family: Helvetica;
+  font-size: 30px;
+  margin-top: 25px;
+  margin-left: 25px;
+}
+
+.label {
+  pointer-events: none;
+  color: #000000;
+}
+
+</style>
+<div class="wrapper">
+<div class="button"><label>Upload File</label><input id = 'file-input' type='file'></div>
+<div class="svg"><svg width=400 height=600></svg></div>
+</div>
+<div id="tooltip" class="tooltip"></div>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script>
+
+const radius = 15;
+const margin = radius/2;
+const fontsize = 11;
+const transitiontime = 250;
+const width = window.innerWidth - 325,
+      height = window.innerHeight - 25;
+const attackColours = {"support":"#70bb00","attackundercut":"#dd0000","attackrebut":"#dd0000"};
+const attackDash = {"support":0,"attackundercut":0,"attackrebut":2};
+const arrowSize = 5;
+const linkDistance = radius*5;
+const chargeStrength = -10*linkDistance;
+
+var initialized = false;
+var isDragging = false;
+
+// File upload handling
+var fileInput = document.getElementById('file-input');
+fileInput.addEventListener('change', function(event) { parseFile(event) });
+
+function forceSimulation(nodes,links) {
+  return d3.forceSimulation(nodes)
+    .force("charge", d3.forceManyBody().strength(chargeStrength))
+    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(linkDistance))
+    .force("x", d3.forceX(width / 2))
+    .force("y", d3.forceY(height / 2))
+    .on("tick", ticked);
+}
+
+var svg = createSVG();
+
+var link = svg.selectAll(".link"),
+    node = svg.selectAll(".node"),
+    label = svg.selectAll(".label");
+    tooltip = d3.select("#tooltip").style("opacity", 0.8);
+
+d3.json("graph.json", function(error,graph) { createGraph(error,graph) });
+var simulation = forceSimulation(node, link);
+
+function resetGraph(graph,svg) {
+  removeGraph(svg);
+  svg = createSVG();
+  link = svg.selectAll(".link"),
+  node = svg.selectAll(".node"),
+  label = svg.selectAll(".label");
+  createGraph(null, graph);
+  simulation = forceSimulation(node, link)
+}
+
+function removeGraph(svg) {
+  svg.selectAll(".link").remove();
+  svg.selectAll(".node").remove();
+  svg.selectAll(".label").remove();
+  node.remove();
+  link.remove();
+  nodes = [];
+  links = [];
+}
+
+function createSVG() {
+  var svgCreated = d3.select("svg")
+  .attr("width", width)
+  .attr("height", height);
+
+  svgCreated.append("defs").selectAll("marker")
+    .data(["attackundercut", "attackrebut", "support"])
+  .enter().append("marker")
+    .attr("id", function(d) { return d; })
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", radius+margin)
+    .attr("refY", -0.45*arrowSize)
+    .attr("markerWidth", arrowSize)
+    .attr("markerHeight", arrowSize)
+    .attr("orient", "auto")
+  .append("path")
+    .attr("d", "M0,-5L10,0L0,5");
+  return svgCreated;
+}
+
+function createGraph(error,graph) {
+  if (error) throw error; 
+
+  simulation.nodes(graph.nodes);
+  simulation.force("link").links(graph.links);
+  initialize(graph);
+}
+
+function initialize(graph) {
+  link = link
+    .data(graph.links)
+    .enter().append("path")
+    .attr("class", function(d) { return "link " + d.attackType; })
+    .attr("marker-end", function(d) { return "url(#" + d.attackType + ")"; })
+    .style("stroke", function(d) { return attackColours[d.attackType]; })
+    .style("stroke-dasharray", function(d) { return attackDash[d.attackType]; });
+
+  node = node
+    .data(graph.nodes)
+    .enter().append("circle")
+    .attr("class", "node")
+    .attr("r", radius)
+    .on("mouseover", mouseover)
+    .on("mouseout", mouseout)
+    .call(drag(simulation));
+
+  label = label
+    .data(graph.nodes)
+    .enter().append("text")
+    .attr("class","label")
+    .attr("font-family", "Arial")
+    .attr("font-size", fontsize)
+    .attr("text-anchor", "middle")
+    .text(function(d) { return d.name.slice(0,4); });
+}
+
+// Parses file and creates graph (Needs to await file being loaded)
+async function parseFile(event) {
+  file = event.target.files[0];
+  var fileReader = new FileReader();
+  try {
+    var string = await readFile(file);
+  } catch (error) {
+    console.error(error);
+  }
+  resetGraph(JSON.parse(string), svg);
+}
+
+// Reads in file using FileReader
+function readFile(file) {
+  return new Promise(function(resolve, reject) {
+    var fileReader = new FileReader();
+    fileReader.onerror = function() {
+      fileReader.abort();
+      reject(filereader.error)
+    };
+    fileReader.onload = function() {
+      resolve(fileReader.result);
+    };
+    fileReader.readAsText(file);
+  })
+}
+
+function ticked() {
+  link.attr("d", linkArc);
+
+  node.attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+      
+  label.attr("x", function(d) { return d.x; })
+      .attr("y", function(d) { return d.y + 0.5*margin; });
+}
+
+function linkArc(d) {
+  var dx = d.target.x - d.source.x,
+      dy = d.target.y - d.source.y,
+      dr = Math.sqrt(dx * dx + dy * dy);
+  return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+}
+
+function mouseover() {
+  if(!isDragging) {
+    var nodeData = d3.select(this)._groups["0"]["0"].__data__;
+    tooltip.transition()
+      .duration(100)
+      .style("opacity", 0.8);
+    var tooltipHtml = "<span>" + nodeData.id + ": " + nodeData.name + "</span>";
+
+    tooltip.html(tooltipHtml)
+      .style("left", (nodeData.x + 300) + "px")
+      .style("top", (nodeData.y - 30) + "px");
+    
+    d3.select(this).transition()
+        .duration(transitiontime)
+        .attr("r", radius*1.2);
+    d3.select(this).style("fill", "#ff8800");
+  }
+}
+
+function mouseout() {
+  if(!isDragging) {
+    tooltip.transition()
+      .duration(200)
+      .style("opacity", 0);
+
+    d3.select(this).transition()
+      .duration(transitiontime)
+      .attr("r", radius);
+    d3.select(this).style("fill", "#0088ff");
+  }
+}
+
+function drag(simulation) {
+  
+  function dragstarted(d) {
+    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+    isDragging = true;
+  }
+  
+  function dragged(d) {
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
+  }
+  
+  function dragended(d) {
+    if (!d3.event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+    isDragging = false;
+  }
+  
+  return d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
+}
+</script>
