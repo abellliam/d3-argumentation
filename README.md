@@ -21,7 +21,7 @@ Project comes with 2 argumentation graphs included, where graph.json is the defa
 graph loaded on startup
 
 
-![Graph 1](scr-1.jpg)
+![Graph 1](scr-1.png)
 
 
-![Graph 2](scr-2.jpg)
+![Graph 2](scr-2.png)
