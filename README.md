@@ -14,7 +14,7 @@ Red dashed arrows represent undercut attacks
 
 
 To view project, make sure you have python installed and on your path, then 
-run python -m http.server 8000 and visit 127.0.0.1:8000 in the browser of your choice
+run python -m http.server 8000 from within the project folder and visit 127.0.0.1:8000 in the browser of your choice
 
 
 Project comes with 2 argumentation graphs included, where graph.json is the default 
