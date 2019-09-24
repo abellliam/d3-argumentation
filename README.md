@@ -3,7 +3,14 @@ Argumentation Graph Visualisation prototype created for Regis Riveret of Data61 
 
 
 In its current state, this prototype can open and display argumentation graphs in
-an interactive manner.
+an interactive manner. Additionally, arguments may be repositioned and an algorithm is 
+applied to show which arguments are "in"/"out" etc.
+
+Green nodes represent "in" arguments
+
+Orange nodes represent "out" arguments
+
+Grey nodes represent undecided arguments
 
 
 Green arrows represent support relations
