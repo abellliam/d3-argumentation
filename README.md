@@ -19,7 +19,7 @@ run python -m http.server 8000 from within the project folder and visit 127.0.0.
 
 
 Project comes with 2 argumentation graphs included, where graph.json is the default 
-graph loaded on startup    
+graph loaded on startup and graph2.json is the graph provided by Data61   
 
 # Graph 1
 ![Graph 1](scr-1.png)     
