@@ -6,18 +6,12 @@ In its current state, this prototype can open and display argumentation graphs i
 an interactive manner. Additionally, arguments may be repositioned and an algorithm is 
 applied to show which arguments are "in"/"out" etc.
 
-Green nodes represent "in" arguments
 
-Orange nodes represent "out" arguments
+Green nodes represent "in" arguments, orange nodes represent "out" arguments
+and grey nodes represent undecided arguments
 
-Grey nodes represent undecided arguments
-
-
-Green arrows represent support relations
-
-Red solid arrows represent rebut attacks
-
-Red dashed arrows represent undercut attacks
+Green arrows represent support relations, red solid arrows represent rebut attacks
+and red dashed arrows represent undercut attacks
 
 
 To view project, make sure you have python installed and on your path, then 
